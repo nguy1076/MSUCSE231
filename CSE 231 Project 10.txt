@@ -1,0 +1,304 @@
+﻿###########################################################
+#  Aces Up Card Game Project #10
+#
+#  Define all functions
+#   Prompts Rules
+#    Prompts menu and asks for user option input
+#    Returns different scenarios based on users input into menu
+#   displays options that deal, move card from tableau to foundation,
+#     move card from tableau to empty tableau, restart, menu, quit
+#  Code continues to loop once user inputs Q, ends the program
+###########################################################
+
+
+import cards  # required !!!
+
+
+RULES = '''
+Aces High Card Game:
+    Tableau columns are numbered 1,2,3,4.
+    Only the card at the bottom of a Tableau column can be moved.
+    A card can be moved to the Foundation only if a higher ranked card
+    of the same suit is at the bottom of another Tableau column.
+    To win, all cards except aces must be in the Foundation.'''
+
+
+MENU = '''    
+Input options:
+   D: Deal to the Tableau (one card on each column).
+   F x: Move card from Tableau column x to the Foundation.
+   T x y: Move card from Tableau column x to empty Tableau column y.
+   R: Restart the game (after shuffling)
+   H: Display the menu of choices
+   Q: Quit the game       
+'''
+
+
+#defines init_game function
+def init_game():
+   """
+   Function initializes the game
+   returns stock(my_deck), tableau, foundation
+   stock: type class deck
+   tableau: list if lists
+   foundation: list
+   """
+   tableau = [[],[],[],[]]
+   foundation = []
+   my_deck = cards.Deck() #retrieves deck
+   my_deck.shuffle() #shuffles deck
+   #calls deal to tableau with parameters of tableau and deck
+   deal_to_tableau(tableau,my_deck)
+   return (my_deck, tableau, foundation)  #returns deck, tableau, foundation
+
+
+#defines deal to tableau function
+def deal_to_tableau(tableau, stock):
+   """
+   Function deals card from stock to each column in tableau
+   Unless the stock has fewer than 4 cards
+       deals a card to consecutive columns
+       until the stock is empty
+   returns nothing
+   tableau: list of list
+   stock: type class deck
+   """
+   num_tableau = len(tableau) #length of tableau
+   num_stock = len(stock) #length of stock pile
+   for i in range(min(num_tableau,num_stock)):
+       deal_card = stock.deal() #deals cards in stock pile
+       tableau[i].append(deal_card) #appends dealt card to tableau
+   pass  # stub; delete and replace it with your code
+
+
+#defines validate move to foundation function
+def validate_move_to_foundation( tableau, from_col ):
+   """
+   Function determines if a requested move to within the tableau is valid
+   returns boolean
+   tableau: list of list
+   from_col: integer (column whos bottom card being moved)
+   from_col: ranges from 0-3
+   """
+   if len(tableau[from_col]) == 0: #checks if tableau is empty
+       print("\nError, empty column:",(from_col + 1))
+       return False
+   card = (tableau[from_col][-1])
+   if card.rank() == 1: #checks if rank is ace
+       card_rank = 14
+   else:
+       card_rank = card.rank()
+   for i in range(len(tableau)):
+       if len(tableau[i]) == 0:
+           continue
+       else:
+           last_card = tableau[i][-1]
+           if last_card.rank() == 1:
+               ace = 14
+           else:
+               ace = last_card.rank()
+       if card_rank < ace and card.suit() == last_card.suit():
+           return True
+   print("\nError, cannot move {}.".format(card))
+   return False
+
+
+#defines move to foundation function
+def move_to_foundation( tableau, foundation, from_col ):
+   """
+   Function  moves a card from the tableau to the foundation
+   When move is valid, tableau and foundation will be updated
+   tableau: list of list
+   foundation: list
+   from_col: integer (column whos bottom card being moved)
+   from_col: ranges from 0-3
+   """
+   #calls validate move to foundation is move is valid
+   if validate_move_to_foundation(tableau,from_col):
+   #if move is valid then card is appended and last card tableau in from col is removed
+       foundation.append(tableau[from_col].pop())
+
+
+
+
+#defines validate move within tableau function
+def validate_move_within_tableau( tableau, from_col, to_col ):
+   """
+   Function determines if a requested move to within
+       the tableau is valid
+   Returns boolean and or error message
+   tableau: list of list
+   from_col: integer (ranges from 0-3)
+   to_col: integer (ranges from 0-3)
+   """
+   if len(tableau[to_col]) == 0:
+       if len(tableau[from_col]) != 0: #checks if length of tableau in colum is not empty
+           return True
+       else:
+           #prints if column is empty
+           print("\nError, no card in column:",(from_col + 1))
+           return False
+   #checks if length of tableau target column is empty
+  
+   else:
+       #prints if target column is not empty
+       print("\nError, target column is not empty:",(to_col + 1))
+       return False
+
+
+#defines move within tableau function
+def move_within_tableau( tableau, from_col, to_col ):
+   """
+   Function moves card from tableau to foundation
+   returns nothing
+   tableau: list of list
+   from_col: integer (column whos bottom card being moved)
+   from_col: ranges from 0-3
+   to_col: integer (column card should be moved to)
+   to_col: ranges from 0-3
+   """
+   #calls validate move within tableau move is valid
+   if validate_move_within_tableau(tableau,from_col,to_col):
+   #if move is valid then card is appended to target column
+   #last card tableau in from col is removed
+       tableau[to_col].append(tableau[from_col].pop())
+
+
+#def check for win function    
+def check_for_win( tableau, stock ):
+   """
+   Function checks if the game has been won
+   returns boolean
+   stock: type class deck
+   tableau: list if lists
+   """
+   total_cards = 0
+   if len(stock) > 0:
+       return False
+       total_cards = 0
+
+
+   for card_pile in tableau: #illiterate through each column in tableau
+       for c in card_pile: #illiterate through each card in tableau
+           total_cards += (c.rank())
+   if total_cards == 4:
+       return True
+   #returns true if the length of each column is 4 and total rank is 4
+   return False 
+
+
+#defines display function
+def display( stock, tableau, foundation ):
+   '''Provided: Display the stock, tableau, and foundation.'''
+   #format table
+   print("\n{:<8s}{:^13s}{:s}".format( "stock", "tableau", "  foundation"))
+   maxm = 0
+   for col in tableau:
+       if len(col) > maxm:
+           maxm = len(col)
+  
+   assert maxm > 0   # maxm == 0 should not happen in this game?
+      
+   for i in range(maxm):
+       if i == 0:
+           if stock.is_empty():
+               print("{:<8s}".format(""),end='')
+           else:
+               print("{:<8s}".format(" XX"),end='')
+       else:
+           print("{:<8s}".format(""),end='')       
+      
+       #prior_ten = False  # indicate if prior card was a ten
+       for col in tableau:
+           if len(col) <= i:
+               print("{:4s}".format(''), end='')
+           else:
+               print( "{:4s}".format( str(col[i]) ), end='' )
+
+
+       if i == 0:
+           if len(foundation) != 0:
+               print("    {}".format(foundation[-1]), end='')
+              
+       print()
+
+
+#defines get option function
+def get_option():
+   """
+   Function propts user to enter option
+   returns list
+   """
+   invalid_option = str("\nError in option:")
+   option = input("\nInput an option (DFTRHQ): ") #user input
+   option_one = option.strip().split() #strips and splits list
+   option_index = option_one[0].upper() #capitalize
+   try:
+       if option_index == "D" and len(option_one) == 1: #if user inputs D
+           return ["D"]
+       elif option_index == "F": #if user inputs F
+           x = int(option_one[1]) -1
+           if x <= 3 and x >= 0:
+               return ["F",x]
+           else:
+               print(invalid_option,str(option))
+               return []
+       elif option_index == "T": #if user inputs T
+           x = int(option_one[1]) -1
+           y = int(option_one[2]) -1
+           if x <= 3 and x >= 0 and y <= 3 and y >= 0:
+                   return ["T",x,y]
+           else:
+               print(invalid_option,str(option))
+               return []
+       elif option_index == "R" and len(option_one) == 1: #if user inputs R
+           return ["R"]
+       elif option_index == "H" and len(option_one) == 1: #if user inputs H
+           return ["H"]
+       elif option_index == "Q" and len(option_one) == 1: #if user inputs Q
+           return ["Q"]
+       else: #if user does not input valid menu options
+           print(invalid_option,str(option))
+           return []
+   except:
+       print(invalid_option,str(option))
+       return []   # stub; delete and replace with your code
+
+
+#defines main function
+def main():
+   print(RULES)
+   print(MENU)
+   stock,tableau,foundation = init_game() #initialize game
+   display(stock,tableau,foundation)
+   while True:
+       option = get_option() #calls get option function
+       if option == []: #if option is empty
+           continue
+       elif option[0] == "D": #if option input is D
+           deal_to_tableau(tableau,stock)
+       elif option[0] == "F": #if option input is F
+           move_to_foundation(tableau,foundation,option[1])
+       elif option[0] == "T": #if option input is T
+           #validate_move_within_tableau(tableau,option[1],option[2]) #fix this
+           move_within_tableau(tableau,option[1],option[2])
+       elif option[0] == "R": #if option input is R
+           stock,tableau,foundation = init_game()
+           print("\n=========== Restarting: new game ============")
+           print(RULES)
+           print(MENU)
+       elif option[0] == "H": #if option input is H
+           print(MENU)
+       elif option[0] == "Q": #if option input is Q
+           print("\nYou have chosen to quit.")
+           break #ends loop
+       #checks tableau and stock if user wins
+       if check_for_win(tableau,stock):
+           print("\nYou won!")
+           break #prints winning statment and ends loop
+       #displays table of cards
+       display(stock,tableau,foundation)
+
+
+if __name__ == '__main__':
+    main()
