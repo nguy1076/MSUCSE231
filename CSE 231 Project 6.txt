@@ -1,0 +1,339 @@
+﻿###########################################################
+   #  Recommended Books Project #6
+   #
+   #  Define function coding to open file
+   #   Define function coding to read file
+   #    Define function coding to find books by criterion
+   #     Define function coding to find books by criteria
+   #      Define function coding to find books by keywords
+   #      Define function to sort authors alphebetically
+   #      Define function to recommend books by certain wants
+   #     Define function to display books 
+   #    Define function to display user inputs
+   #   Define main function to run code
+   #       opens the file then calls it into the read file function
+   #         asks for user inputs
+   #          display menu based on user input
+   #         returns different scenarios based on users input into menu
+   #       code continues to loop, once user inputs 4, end program
+   ###########################################################
+
+
+import csv
+from operator import itemgetter
+
+
+TITLE = 1
+CATEGORY = 3
+YEAR = 5
+RATING = 6
+PAGES = 7
+
+
+MENU = "\nWelcome to the Book Recommendation Engine\n\
+       Choose one of below options:\n\
+       1. Find a book with a title\n\
+       2. Filter books by a certain criteria\n\
+       3. Recommend a book \n\
+       4. Quit the program\n\
+       Enter option: "
+
+
+CRITERIA_INPUT = "\nChoose the following criteria\n\
+                (3) Category\n\
+                (5) Year Published\n\
+                (6) Average Rating (or higher) \n\
+                (7) Page Number (within 50 pages) \n\
+                Enter criteria number: "
+
+
+TITLE_FORMAT = "{:15s} {:35s} {:35s} {:6s} {:8s} {:15s} {:15s}"
+TABLE_FORMAT = "{:15s} {:35s} {:35s} {:6s} {:<8.2f} {:<15d} {:<15d}"
+
+
+def open_file():
+   """
+   Funtion promps the user to input a file name
+   then function opens file that user input
+   takes file pointer and opens it
+   """
+   while True:
+       file_name = input("Enter file name: ")
+       try:
+           fp = open(file_name, "r", encoding="utf-8")
+           return fp
+          
+       except FileNotFoundError:
+           print("\nError opening file. Please try again.")
+  
+def read_file(fp):
+   """
+   function reads csv file
+       returns fp
+   fp: file pointer, returns from the file function, file name information
+   """
+   csv_reader = csv.reader(fp) # attaches a reader to the file fp
+   next(csv_reader) # skips a line, such as a header line
+   tuple_list = []
+   for line in csv_reader:
+       try:
+           isbn13 = line[0]
+           title = line[2]
+           authors = line[4]
+           categories = line[5].lower().split(",")
+           description = line[7]
+           year = line[8]
+           rating = float(line[9])
+           num_pages = int(line[10])
+           rating_count = int(line[11])
+           books = (isbn13, title, authors, categories, description, year, rating, num_pages, rating_count)
+           tuple_list.append(books)
+       except:
+           continue
+   #returns list of books
+   return tuple_list 
+  
+def get_books_by_criterion(list_of_tuples, criterion, value):
+   """
+   Function retrieves books that match a certain criteria
+   returns list_of_tuples or one tuple
+   list_of_tuples: a list that includes the isbn13, title, authors,
+       categories, description, year, rating, num_pages, rating_count
+   criterion: list of tuples specific variable
+   value: the index where the variable in list of tuples is located
+   """
+   new_list = []
+   if criterion == TITLE:
+       value = value.lower()
+       for i in list_of_tuples:
+           if i[criterion].lower() == value:
+               return i
+   elif criterion == CATEGORY:
+       value = value.lower()
+       for i in list_of_tuples:
+           if value in i[criterion]:
+               new_list.append(i)
+       return new_list
+   elif criterion == YEAR:
+       value = value.lower()
+       for i in list_of_tuples:
+           if i[criterion].lower() == value:
+               new_list.append(i)
+       return new_list
+   elif criterion == RATING:
+       for i in list_of_tuples:
+           if i[criterion] >= value:
+               new_list.append(i)
+       return new_list
+   elif criterion == PAGES:
+       for i in list_of_tuples:
+           if i[criterion] <= (value + 50) and i[criterion] >= (value - 50):
+               new_list.append(i)
+       return new_list
+   return new_list
+
+
+def get_books_by_criteria(list_of_tuples, category, rating, page_number):
+   """
+   function calls get_books_by_criterion by the specific topic user wants to search
+   list_of_tuples: list of all the wanted information in the file
+       category: criteria category the list of tuples is in
+   rating: criteria rating the list of tuples is in
+   page_number: criteria age number the list of tuples is in
+   """
+   books_for_category = get_books_by_criterion(list_of_tuples, 3, category)
+   books_for_rating = get_books_by_criterion(books_for_category, 6 ,rating)
+   books_for_page_number = get_books_by_criterion(books_for_rating, 7, page_number)
+   return books_for_page_number
+  
+def get_books_by_keyword(list_of_tuples, keywords):
+   """
+   Function retrives book titles based on keywords
+   returns list of tuples of all books that include keywords in description once
+   list_of_tuples: list of all the wanted information in the file
+   keywords: keywords user wants to search
+   """
+   empty_list = []
+   for i in list_of_tuples:
+       for l in keywords:
+           if l.lower() in i[4].lower() and i not in empty_list:
+               empty_list.append(i)
+   return empty_list
+
+
+def sort_authors(list_of_tuples, a_z = True):
+   """
+   Function creates list when books are sorted by authors name
+   if acending order is false, list will be returned in decending order
+       returns list of tuples
+   list_of_tuples: list of all the wanted information in the file
+   a_z: sorted authors list in alphabetical order
+   """
+   return_variable = sorted(list_of_tuples[:], key = itemgetter(2))
+   if a_z == True:
+       return return_variable
+   else:
+       return_variable.reverse()
+       return return_variable
+
+
+def recommend_books(list_of_tuples, keywords, category, rating, page_number,  a_z):
+   """
+   Function retrieves all books filtered by category, rating, page number and sorted authors
+   returns list of tuples based on users wants
+   list_of_tuples: list of all the wanted information in the file
+       keywords: keywords user wants to search
+       category: criteria category the list of tuples is in
+   rating: criteria rating the list of tuples is in
+   page_number: criteria age number the list of tuples is in
+   a_z: sorted authors list in alphabetical order
+   """
+   books_criteria = get_books_by_criteria(list_of_tuples, category, rating, page_number)
+   books_keywords = get_books_by_keyword(books_criteria, keywords)
+   books_authors = sort_authors(books_keywords, a_z)
+   return books_authors
+  
+  
+def display_books(list_of_tuples):
+   """
+   Function displays the books along with its information
+       returns list_of_tuples
+   list_of_tuples: list of all the wanted information in the file
+   """
+   print("\nBook Details:")
+   if len(list_of_tuples) == 0:
+       print("Nothing to print.")
+   else:
+       print("{:15s} {:35s} {:35s} {:6s} {:8s} {:15s} {:15s}".format("ISBN-13", "Title", "Authors", "Year", "Rating", "Number Pages", "Number Ratings"))
+       for tuples in list_of_tuples:
+           if len(tuples[1]) <= 35 and len(tuples[2]) <= 35:
+               print("{:15s} {:35s} {:35s} {:6s} {:<8.2f} {:<15d} {:<15d}".format(tuples[0], tuples[1], tuples[2], tuples[5], tuples[6], tuples[7], tuples[8]))
+  
+
+
+def get_option():
+   """
+   Function displays menu and prompts input
+   if input is within values 1-4 inclusively then input returns
+   if input not within 1-4 inclusively then returns invalid
+   returns users input options
+   """
+   invalid_option = str("\nInvalid option")
+   option = input(MENU)
+   if option == "4" or option == "3" or option == "2" or option == "1":
+       return option
+   else:
+       print(invalid_option)
+       return None
+
+
+def main():
+   #calls function to open the file and read the file
+   opens_the_file = open_file()
+   reads_the_file = read_file(opens_the_file)
+   while True:
+       #calls the funtion option and prints the menu and asks for user input
+       option = get_option()
+       #when user inputs option 1
+       if option == "1":
+           book_title = input("\nInput a book title: ")
+           books_for_criterion = get_books_by_criterion(reads_the_file, 1, book_title)
+           display_books([books_for_criterion])
+       #when user inputs option 2
+       elif option == "2":
+           criteria_input_option = input(CRITERIA_INPUT)
+           ##when user inputs second option of either 3,5,7, or 6
+           while criteria_input_option != "3" and criteria_input_option != "5" and criteria_input_option != "6" and criteria_input_option != "7":
+               print("\nInvalid input")
+               criteria_input_option = input(CRITERIA_INPUT)
+           #if user inputs option 3 in the second option
+           if criteria_input_option == "3":
+               input_value = input("\nEnter value: ")
+               books_for_criteria = get_books_by_criterion(reads_the_file, 3, input_value)
+               criteria_authors = sort_authors(books_for_criteria, a_z = True)
+               display_books(criteria_authors[:30])
+           #if user inputs option 5 in the second option
+           if criteria_input_option == "5": #year,
+               input_value = input("\nEnter value: ")
+               books_for_criteria = get_books_by_criterion(reads_the_file, 5, input_value)
+               criteria_authors = sort_authors(books_for_criteria, a_z = True)
+               display_books(criteria_authors[:30])
+           #if user inputs option 6 in the second option
+           if criteria_input_option == "6": #rating, has to be a float
+               input_value = input("\nEnter value: ")
+               #statments convert the user input into a float if true
+               while True:
+                   try:
+                       input_value = float(input_value)
+                       break
+                   #if  user input cannot be converted to float, then asks for user input to try again
+                   except:
+                       print("\nInvalid input")
+                       input_value = input("\nEnter value: ")
+               books_for_criteria = get_books_by_criterion(reads_the_file, 6, input_value)
+               criteria_authors = sort_authors(books_for_criteria, a_z = True)
+               display_books(criteria_authors[:30])
+           #if user inputs option 7 in the second option
+           if criteria_input_option == "7": # pages, has to be an int
+               input_value = input("\nEnter value: ")
+               #statments convert the user input into a integer if true
+               while True:
+                   try:
+                       input_value = int(input_value)
+                       break
+                   #if  user input cannot be converted to integer, then asks for user input to try again
+                   except:
+                       print("\nInvalid input")
+                       input_value = input("\nEnter value: ")
+               books_for_criteria = get_books_by_criterion(reads_the_file, 7, input_value)
+               criteria_authors = sort_authors(books_for_criteria, a_z = True)
+               display_books(criteria_authors[:30])
+       #if user inputs option 3
+       elif option == "3":
+           #asks for user inputs of category and rating
+           input_category = input("\nEnter the desired category: ")
+           input_rating = input("\nEnter the desired rating: ")
+           #statments convert the user input into a float if true
+           while True:
+               try:
+                   input_rating = float(input_rating)
+                   break
+               #if  user input cannot be converted to float, then asks for userinput to try again
+               except:
+                   input_rating = input("\nEnter the desired rating: ")   
+           #asks for user input for page number
+           input_page_num = input("\nEnter the desired page number: ")
+           #statments convert the user input into an integer if true
+           while True:
+               try:
+                   input_page_num = int(input_page_num)
+                   break
+               #if  user input cannot be converted to integer, then asks for userinput to try again
+               except:
+                   input_page_num = input("\nEnter the desired page number: ") 
+           #asks for user input for author name
+           input_author = input("\nEnter 1 for A-Z sorting, and 2 for Z-A sorting: ")
+           #if author does equal to one then list will be in sorted order
+           if input_author == "1":
+               a_z = True
+           else:
+               #if author does not equal to one then list will be in reverse order
+               a_z = False
+           input_keywords = input("\nEnter keywords (space separated): ").split()
+           recommended_words_in_books = recommend_books(reads_the_file, input_keywords, input_category, input_rating, input_page_num, a_z)
+           display_books(recommended_words_in_books)
+       #if user inputs option 4
+       #options ends the loop
+       elif option == "4":
+           break
+
+
+
+
+# DO NOT CHANGE THESE TWO LINES
+# These two lines allow this program to be imported into other code
+# such as our function_test code allowing other functions to be run
+# and tested without 'main' running.  However, when this program is
+# run alone, 'main' will execute.
+if __name__ == "__main__":
+   main()
