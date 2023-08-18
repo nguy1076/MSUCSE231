@@ -1,0 +1,123 @@
+﻿###########################################################
+#  Prefix Computer Project #9
+#
+#  Define all functions
+#   txt file program
+#    Asks for user file name
+#     Asks for user to input a prefix
+#    Displays different phrases based on inputs
+#   Continues to ask for user input until user inputs # to end
+#  Programs prints ending message and ends program
+###########################################################
+
+
+'''
+Main data structure is a dictionary
+  word_dic[(i,ch)] = set of words with ch at index i
+'''
+
+
+import string
+
+
+#defines open file function
+def open_file():
+   """
+   Funtion promps the user to input a file name
+   then function opens file that user input
+   takes file pointer and opens it
+   """
+   while True:
+       #ask for user input specific file name
+       file_name = input("\nInput a file name: ")
+       try:
+           fp = open(file_name, "r", encoding="utf-8")
+           return fp
+          
+       except FileNotFoundError:
+           print("\n[Error]: no such file")#prints if user input file is not found
+
+
+#defines read file function
+def read_file(fp):
+   """
+   function reads txt file
+       returns fp_games
+   fp: file pointer, returns from the file function, file name information
+   """
+   empty_set = set() #creates empty set
+   for line in fp:
+       for w in line.split(): #removes spaces from word
+           word_punct = w.strip(string.punctuation) #removes punctuation from word
+           #checks for word length and alpahebtical characters
+           if word_punct.isalpha() == True and len(word_punct) > 1:
+               empty_set.add(word_punct.lower()) #adds word to set and makes it lower case
+   return empty_set #returns set of strings
+      
+#defines fill_completions function
+def fill_completions(words):
+   '''
+   Funtion: takes a set of words and returns a dictionary
+   whose keys are tuples and the values are sets
+   words: set of words
+   '''
+   dict_list = {}
+   #takes a set of words and iterates through each word
+   for word in words:
+       for i in range(len(word)):
+           character = word[i].lower()
+           k = (i,character) #creates a tuple
+           if k not in dict_list: #checks if k tuple is in dict_list
+               dict_list[k] = set() #makes a set
+           #word is added to set with associated key
+           dict_list[k].add(word.lower())
+   return dict_list #returns dictionary
+  
+#defines find_completions function
+def find_completions(prefix,word_dic):
+   '''
+   Function takes a prefix of a word and a completions dictionary of word_dic
+   Returns the set of words in the completions dictionary that complete the prefix
+   prefix: string
+   word_dic: dictionary
+   '''
+   set_name = set() #empty set
+   if prefix == "": #if prefix is empty
+       return set_name #returns empty set
+   k = (len(prefix)) #length of prefix
+   for i in range(k):
+       key = (i,prefix[i]) #creates key
+       if key in word_dic: #checks if key is in word_dic
+           if i != 0:
+               set_name = set_name & word_dic[key]
+           else:
+               set_name = word_dic[key]
+       else:
+           return set()
+   return set_name #returns set
+
+
+def main():  
+   open_the_file = open_file() #calls open file
+   reads_the_file = read_file(open_the_file) #calls read file ussing open file
+   call_fill_completion = fill_completions(reads_the_file)#calls fill completion with read file
+
+
+   while True:
+       #asks for user input
+       user_input = input("\nEnter a prefix (# to quit): ")
+       #when user inputs
+       if user_input == "#": #input ends loop
+           break #ends program
+       complete = find_completions(user_input,call_fill_completion) #calls find_completion function
+       complete = list(complete) #makes into a list
+       complete = sorted(complete) #sorts list
+       if complete:
+           print("\nThe words that completes {} are: {}".format(user_input,', '.join(complete)))
+       else:
+           print("\nThere are no completions.") #prints when the prefix has no completions
+   print("\nBye") #prints ending message
+
+
+if __name__ == '__main__':
+   main()
